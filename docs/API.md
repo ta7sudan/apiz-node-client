@@ -1,4 +1,5 @@
-# apiz-node-client
+## API
+
 apiz-node-client implements the `APIzClient` interface for node, based on [got](https://github.com/sindresorhus/got), so you can use options of got.
 
 
