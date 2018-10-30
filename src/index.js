@@ -1,6 +1,7 @@
 /* global DEBUG */
 'use strict';
 const got = require('got');
+const { Readable } = require('stream');
 
 const MIME = {
 	json: 'application/json',
@@ -11,12 +12,19 @@ function request({ url, method, type, data, options, beforeRequest, afterRespons
 	let opts = {}, hooks = {};
 	if (Object.prototype.toString.call(options) === '[object Object]') {
 		opts = options;
-	} else if (data) {
+	} else if (data instanceof Buffer || data instanceof Readable) {
 		opts.body = data;
 		if (MIME[type]) {
 			opts.headers = {
 				'Content-Type': MIME[type]
 			};
+		}
+	} else if (data) {
+		opts.body = data;
+		if (type === 'json') {
+			opts.json = true;
+		} else if (type === 'form') {
+			opts.form = true;
 		}
 	}
 
@@ -39,7 +47,7 @@ module.exports = function (opts = {}) {
 		...['get', 'head'].reduce((prev, cur) =>
 			(prev[cur] = (url, options) => request({
 				url,
-				method: cur,
+				method: cur.toUpperCase(),
 				options,
 				...opts
 			}), prev), {}),
@@ -47,7 +55,7 @@ module.exports = function (opts = {}) {
 			(prev[cur] = (url, bodyOrOptions, type, isOptions) => request({
 				url,
 				type,
-				method: cur,
+				method: cur.toUpperCase(),
 				data: isOptions ? undefined : bodyOrOptions,
 				options: isOptions ? bodyOrOptions : undefined,
 				...opts
