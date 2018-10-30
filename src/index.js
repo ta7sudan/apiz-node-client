@@ -1,6 +1,5 @@
 /* global DEBUG */
 'use strict';
-const { Readable } = require('stream');
 const got = require('got');
 
 const MIME = {
@@ -8,22 +7,19 @@ const MIME = {
 	form: 'application/x-www-form-urlencoded'
 };
 
-function request({ url, method, type, options, beforeRequest, afterResponse }) {
-	let body, opts, hooks = {};
-	if (options instanceof Buffer || options instanceof Readable || typeof options === 'string') {
-		body = options;
-		opts = {
-			body,
-			headers: {
-				'Content-Type': MIME[type]
-			}
-		};
-	} else if (Object.prototype.toString.call(options) === '[object Object]') {
+function request({ url, method, type, data, options, beforeRequest, afterResponse }) {
+	let opts = {}, hooks = {};
+	if (Object.prototype.toString.call(options) === '[object Object]') {
 		opts = options;
-	} else {
-		throw new TypeError('Options for got must be an object.');
+	} else if (data) {
+		opts.body = data;
+		if (MIME[type]) {
+			opts.headers = {
+				'Content-Type': MIME[type]
+			};
+		}
 	}
-	
+
 	if (Array.isArray(beforeRequest)) {
 		hooks.beforeRequest = beforeRequest;
 	}
@@ -31,7 +27,8 @@ function request({ url, method, type, options, beforeRequest, afterResponse }) {
 		hooks.afterResponse = afterResponse;
 	}
 	opts.hooks = hooks;
-	return got[method](url, opts);
+	opts.method = method;
+	return got(url, opts);
 }
 
 /**
@@ -47,11 +44,12 @@ module.exports = function (opts = {}) {
 				...opts
 			}), prev), {}),
 		...['post', 'put', 'patch', 'delete', 'options'].reduce((prev, cur) =>
-			(prev[cur] = (url, bodyOrOptions, type) => request({
+			(prev[cur] = (url, bodyOrOptions, type, isOptions) => request({
 				url,
 				type,
 				method: cur,
-				options: bodyOrOptions,
+				data: isOptions ? undefined : bodyOrOptions,
+				options: isOptions ? bodyOrOptions : undefined,
 				...opts
 			}), prev), {})
 	};
