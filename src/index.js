@@ -8,23 +8,21 @@ const MIME = {
 	form: 'application/x-www-form-urlencoded'
 };
 
-function request({ url, method, type, data, options, beforeRequest, afterResponse }) {
-	let opts = {}, hooks = {};
-	if (Object.prototype.toString.call(options) === '[object Object]') {
-		opts = options;
-	} else if (data instanceof Buffer || data instanceof Readable) {
-		opts.body = data;
+function request({ url, method, type, data, options = {}, beforeRequest, afterResponse }) {
+	let hooks = {};
+	if (data instanceof Buffer || data instanceof Readable) {
+		options.body = data;
 		if (MIME[type]) {
-			opts.headers = {
+			options.headers = {
 				'Content-Type': MIME[type]
 			};
 		}
 	} else if (data) {
-		opts.body = data;
+		options.body = data;
 		if (type === 'json') {
-			opts.json = true;
+			options.json = true;
 		} else if (type === 'form') {
-			opts.form = true;
+			options.form = true;
 		}
 	}
 
@@ -34,9 +32,9 @@ function request({ url, method, type, data, options, beforeRequest, afterRespons
 	if (Array.isArray(afterResponse)) {
 		hooks.afterResponse = afterResponse;
 	}
-	opts.hooks = hooks;
-	opts.method = method;
-	return got(url, opts);
+	options.hooks = hooks;
+	options.method = method;
+	return got(url, options);
 }
 
 /**
