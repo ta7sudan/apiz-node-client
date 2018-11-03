@@ -18,7 +18,8 @@ const apiMeta = {
 const apis = new APIz(apiMeta, {
     client: apizClient({
         beforeRequest: [async options => console.log(options)],
-        afterResponse: [response => console.log(response.statusCode)]
+        afterResponse: [response => console.log(response.statusCode)],
+        retry: 3
     })
 })
 ```

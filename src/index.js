@@ -8,7 +8,7 @@ const MIME = {
 	form: 'application/x-www-form-urlencoded'
 };
 
-function request({ url, method, type, data, options = {}, beforeRequest, afterResponse }) {
+function request({ url, method, type, data, retry = 0, options = {}, beforeRequest, afterResponse }) {
 	let hooks = {};
 	if (data instanceof Buffer || data instanceof Readable) {
 		options.body = data;
@@ -34,29 +34,30 @@ function request({ url, method, type, data, options = {}, beforeRequest, afterRe
 	}
 	options.hooks = hooks;
 	options.method = method;
+	options.retry = retry;
 	return got(url, options);
 }
 
 /**
- * { beforeRequest, afterResponse }
+ * { beforeRequest, afterResponse, retry }
  */
 module.exports = function (opts = {}) {
 	return {
 		...['get', 'head'].reduce((prev, cur) =>
 			(prev[cur] = (url, options) => request({
+				...opts,
 				url,
 				method: cur.toUpperCase(),
-				options,
-				...opts
+				options
 			}), prev), {}),
 		...['post', 'put', 'patch', 'delete', 'options'].reduce((prev, cur) =>
 			(prev[cur] = (url, bodyOrOptions, type, isOptions) => request({
+				...opts,
 				url,
 				type,
 				method: cur.toUpperCase(),
 				data: isOptions ? undefined : bodyOrOptions,
-				options: isOptions ? bodyOrOptions : undefined,
-				...opts
+				options: isOptions ? bodyOrOptions : undefined
 			}), prev), {})
 	};
 };
