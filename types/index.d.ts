@@ -1,5 +1,5 @@
 export default function (options?: {
-	beforeRequest?: Array<function>,
-	afterResponse?: Array<function>,
+	beforeRequest?: Array<Function>,
+	afterResponse?: Array<Function>,
 	retry?: number | object
 }): object;
