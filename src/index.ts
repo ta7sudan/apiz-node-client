@@ -63,7 +63,7 @@ export type APIzClientType = keyof typeof MIME;
 
 export type APIzClientMeta = any;
 
-export type APIzClientInstance = APIzClient<APIzClientType, APIzClientMeta, APIzRequestOptions, HTTPMethodLowerCase>;
+export type APIzClientInstance = APIzClient<APIzRequestOptions, APIzClientType, APIzClientMeta, HTTPMethodLowerCase>;
 
 export type APIzRequestOptions = GotJSONOptions & GotBodyOptions<string> & GotBodyOptions<null> & GotFormOptions<string> & GotFormOptions<null>;
 
@@ -73,12 +73,12 @@ export type APIzRequestOptions = GotJSONOptions & GotBodyOptions<string> & GotBo
 export default function (opts: APIzClientOptions = {}): APIzClientInstance {
 	return {
 		...['get', 'head'].reduce((prev, cur) =>
-			(prev[cur as HTTPMethodLowerCase] = ({ name, meta, url, options }: ClientRequestOptions<APIzClientType, APIzClientMeta, APIzRequestOptions>) => request({
+			(prev[cur as HTTPMethodLowerCase] = ({ name, meta, url, options }: ClientRequestOptions<APIzRequestOptions, APIzClientType, APIzClientMeta>) => request({
 				...opts,
 				url,
 				method: cur.toUpperCase() as HTTPMethodUpperCase,
 				options
-			}), prev), {} as APIzClient<APIzClientType, APIzClientMeta, APIzRequestOptions, HTTPMethodLowerCase>),
+			}), prev), {} as APIzClient<APIzRequestOptions, APIzClientType, APIzClientMeta, HTTPMethodLowerCase>),
 		...['post', 'put', 'patch', 'delete', 'options'].reduce((prev, cur) =>
 			(prev[cur as HTTPMethodLowerCase] = ({ name, meta, url, body, options, type }) => request({
 				...opts,
@@ -87,6 +87,6 @@ export default function (opts: APIzClientOptions = {}): APIzClientInstance {
 				options,
 				method: cur.toUpperCase() as HTTPMethodUpperCase,
 				data: body
-			}), prev), {} as APIzClient<APIzClientType, APIzClientMeta, APIzRequestOptions, HTTPMethodLowerCase>)
+			}), prev), {} as APIzClient<APIzRequestOptions, APIzClientType, APIzClientMeta, HTTPMethodLowerCase>)
 	};
 };

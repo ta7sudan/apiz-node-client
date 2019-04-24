@@ -13,7 +13,7 @@ export interface APIzClientOptions {
 }
 export declare type APIzClientType = keyof typeof MIME;
 export declare type APIzClientMeta = any;
-export declare type APIzClientInstance = APIzClient<APIzClientType, APIzClientMeta, APIzRequestOptions, HTTPMethodLowerCase>;
+export declare type APIzClientInstance = APIzClient<APIzRequestOptions, APIzClientType, APIzClientMeta, HTTPMethodLowerCase>;
 export declare type APIzRequestOptions = GotJSONOptions & GotBodyOptions<string> & GotBodyOptions<null> & GotFormOptions<string> & GotFormOptions<null>;
 /**
  * { beforeRequest, afterResponse, retry }
