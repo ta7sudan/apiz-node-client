@@ -6,7 +6,12 @@ import { Readable } from 'stream';
 // tslint:disable-next-line
 import { APIzClient, HTTPMethodLowerCase, ClientRequestOptions, APIzClientRequest, HTTPMethodUpperCase } from 'apiz-ng';
 
-export type APIzClientType = 'json' | 'form' | string;
+enum MIME {
+	json = 'application/json',
+	form = 'application/x-www-form-urlencoded'
+}
+
+export type APIzClientType = keyof typeof MIME | string;
 
 export type APIzClientMeta = any;
 
@@ -71,14 +76,18 @@ function createRequest({
 
 			($options as any).hooks = hooks;
 
-			if (type === 'json') {
-				($options as GotJSONOptions).json = true;
-			} else if (type === 'form') {
-				($options as GotFormOptions<string | null>).form = true;
-			} else if (type) {
+			if (type && type !== 'json' && type !== 'form') {
 				$options.headers ? $options.headers['Content-Type'] = type : $options.headers = {
 					'Content-Type': type
 				};
+			} else if ((body instanceof Buffer || body instanceof Readable) && (type === 'form' || type === 'json')) {
+				$options.headers ? $options.headers['Content-Type'] = MIME[type] : $options.headers = {
+					'Content-Type': MIME[type]
+				};
+			} else if (type === 'json') {
+				($options as GotJSONOptions).json = true;
+			} else if (type === 'form') {
+				($options as GotFormOptions<string | null>).form = true;
 			}
 		}
 		const p = got(url, $options as GotJSONOptions);

@@ -2,6 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 /* global DEBUG */
 const got = require("got");
+const stream_1 = require("stream");
+var MIME;
+(function (MIME) {
+    MIME["json"] = "application/json";
+    MIME["form"] = "application/x-www-form-urlencoded";
+})(MIME || (MIME = {}));
 const isFn = (f) => typeof f === 'function';
 function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 }) {
     return function request({ url, options, body, headers, type, handleError = true }) {
@@ -27,16 +33,21 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
                 hooks.afterResponse = afterResponse;
             }
             $options.hooks = hooks;
-            if (type === 'json') {
+            if (type && type !== 'json' && type !== 'form') {
+                $options.headers ? $options.headers['Content-Type'] = type : $options.headers = {
+                    'Content-Type': type
+                };
+            }
+            else if ((body instanceof Buffer || body instanceof stream_1.Readable) && (type === 'form' || type === 'json')) {
+                $options.headers ? $options.headers['Content-Type'] = MIME[type] : $options.headers = {
+                    'Content-Type': MIME[type]
+                };
+            }
+            else if (type === 'json') {
                 $options.json = true;
             }
             else if (type === 'form') {
                 $options.form = true;
-            }
-            else if (type) {
-                $options.headers ? $options.headers['Content-Type'] = type : $options.headers = {
-                    'Content-Type': type
-                };
             }
         }
         const p = got(url, $options);
