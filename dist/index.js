@@ -1,52 +1,60 @@
-/* global DEBUG */
-'use strict';
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+/* global DEBUG */
 const got = require("got");
-const stream_1 = require("stream");
-var MIME;
-(function (MIME) {
-    MIME["json"] = "application/json";
-    MIME["form"] = "application/x-www-form-urlencoded";
-})(MIME || (MIME = {}));
-function request({ url, method, type, data, retry = 0, options = {}, beforeRequest, afterResponse }) {
-    const hooks = {};
-    if (data instanceof Buffer || data instanceof stream_1.Readable) {
-        options.body = data;
-        if (MIME[type]) {
-            options.headers = {
-                'Content-Type': MIME[type]
+const isFn = (f) => typeof f === 'function';
+function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 }) {
+    return function request({ url, options, body, headers, type, handleError = true }) {
+        const hooks = {};
+        let $options;
+        if (options) {
+            $options = {
+                ...options,
+                method
             };
         }
-    }
-    else if (data) {
-        options.body = data;
-        if (type === 'json') {
-            options.json = true;
+        else {
+            $options = {
+                method,
+                body,
+                headers,
+                retry
+            };
+            if (Array.isArray(beforeRequest)) {
+                hooks.beforeRequest = beforeRequest;
+            }
+            if (Array.isArray(afterResponse)) {
+                hooks.afterResponse = afterResponse;
+            }
+            $options.hooks = hooks;
+            if (type === 'json') {
+                $options.json = true;
+            }
+            else if (type === 'form') {
+                $options.form = true;
+            }
+            else if (type) {
+                $options.headers ? $options.headers['Content-Type'] = type : $options.headers = {
+                    'Content-Type': type
+                };
+            }
         }
-        else if (type === 'form') {
-            options.form = true;
+        const p = got(url, $options);
+        if (isFn(error) && handleError) {
+            p.catch(e => error(e));
         }
-    }
-    if (Array.isArray(beforeRequest)) {
-        hooks.beforeRequest = beforeRequest;
-    }
-    if (Array.isArray(afterResponse)) {
-        hooks.afterResponse = afterResponse;
-    }
-    // 有类型安全问题...
-    options.hooks = hooks;
-    options.method = method;
-    options.retry = retry;
-    return got(url, options);
+        return p;
+    };
 }
 /**
- * { beforeRequest, afterResponse, retry }
+ * { beforeSend, afterResponse, retry }
  */
 function default_1(opts = {}) {
-    return Object.assign({}, ['get', 'head'].reduce((prev, cur) => (prev[cur] = ({ name, meta, url, options }) => request(Object.assign({}, opts, { url, method: cur.toUpperCase(), options })), prev), {}), ['post', 'put', 'patch', 'delete', 'options'].reduce((prev, cur) => (prev[cur] = ({ name, meta, url, body, options, type }) => request(Object.assign({}, opts, { url,
-        type,
-        options, method: cur.toUpperCase(), data: body })), prev), {}));
+    return ['get', 'head', 'post', 'put', 'patch', 'delete', 'options']
+        .reduce((prev, cur) => (prev[cur] = createRequest({
+        ...opts,
+        method: cur.toUpperCase()
+    }), prev), {});
 }
 exports.default = default_1;
-;
 //# sourceMappingURL=index.js.map
