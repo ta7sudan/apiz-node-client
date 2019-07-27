@@ -87,7 +87,7 @@ function createRequest({
 			} else if (type === 'json') {
 				($options as GotJSONOptions).json = true;
 			} else if (type === 'form') {
-				($options as GotFormOptions<string | null>).form = true;
+				($options as unknown as GotFormOptions<string | null>).form = true;
 			}
 		}
 		const p = got(url, $options as GotJSONOptions);
