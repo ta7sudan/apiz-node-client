@@ -52,7 +52,7 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
         }
         const p = got(url, $options);
         if (isFn(error) && handleError) {
-            p.catch(e => error(e));
+            p.catch(error);
         }
         return p;
     };

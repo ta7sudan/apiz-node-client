@@ -92,7 +92,7 @@ function createRequest({
 		}
 		const p = got(url, $options as GotJSONOptions);
 		if (isFn(error) && handleError) {
-			p.catch(e => error(e));
+			p.catch(error);
 		}
 		return p;
 	};
