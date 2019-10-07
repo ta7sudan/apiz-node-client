@@ -1,6 +1,6 @@
 {
   "name": "apiz-node-client",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Node client for apiz",
   "main": "dist/index.js",
   "types": "types/index.d.ts",
