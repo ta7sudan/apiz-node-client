@@ -52,7 +52,20 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
         }
         const p = got(url, $options);
         if (isFn(error) && handleError) {
-            p.catch(error);
+            // 穿透
+            let $err = null;
+            p.catch((err) => {
+                $err = err;
+                return error(err);
+            })
+                .then((result) => {
+                if (result === false || result === undefined) {
+                    return Promise.reject($err);
+                }
+                else {
+                    return result;
+                }
+            });
         }
         return p;
     };

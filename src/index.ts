@@ -22,7 +22,7 @@ export type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzClientTyp
 export interface APIzClientConstructorOptions {
 	beforeRequest?: Array<BeforeRequestHook<GotBodyOptions<string | null>>>;
 	afterResponse?: Array<AfterResponseHook<GotBodyOptions<string | null>, string | Buffer | Readable>>;
-	error?: (err: Error) => void,
+	error?: (err: Error) => any,
 	retry?: number | RetryOptions;
 }
 
@@ -92,7 +92,19 @@ function createRequest({
 		}
 		const p = got(url, $options as GotJSONOptions);
 		if (isFn(error) && handleError) {
-			p.catch(error);
+			// 穿透
+			let $err: any = null;
+			p.catch((err: Error): any => {
+				$err = err;
+				return error(err);
+			})
+				.then((result: any): any => {
+					if (result === false || result === undefined) {
+						return Promise.reject($err);
+					} else {
+						return result;
+					}
+				});
 		}
 		return p;
 	};

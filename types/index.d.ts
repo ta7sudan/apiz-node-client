@@ -13,7 +13,7 @@ export declare type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzC
 export interface APIzClientConstructorOptions {
     beforeRequest?: Array<BeforeRequestHook<GotBodyOptions<string | null>>>;
     afterResponse?: Array<AfterResponseHook<GotBodyOptions<string | null>, string | Buffer | Readable>>;
-    error?: (err: Error) => void;
+    error?: (err: Error) => any;
     retry?: number | RetryOptions;
 }
 /**
