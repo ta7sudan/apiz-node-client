@@ -8,10 +8,15 @@ var MIME;
     MIME["json"] = "application/json";
     MIME["form"] = "application/x-www-form-urlencoded";
 })(MIME || (MIME = {}));
+let uniqueID = Date.now();
+function getUniqueID() {
+    return ++uniqueID;
+}
 const isFn = (f) => typeof f === 'function';
 function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 }) {
     return function request({ url, options, body, headers, type, handleError = true }) {
         const hooks = {};
+        const reqID = getUniqueID();
         let $options;
         if (options) {
             $options = {
@@ -27,7 +32,7 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
                 retry
             };
             if (Array.isArray(beforeRequest)) {
-                hooks.beforeRequest = beforeRequest;
+                hooks.beforeRequest = beforeRequest.map(hook => (hookOptions) => hook(hookOptions, reqID));
             }
             if (Array.isArray(afterResponse)) {
                 hooks.afterResponse = afterResponse;
@@ -57,6 +62,7 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
             p.catch((err) => {
                 $err = err;
                 const req = (opts) => got(url, opts);
+                req.id = reqID;
                 return error(err, $options, req);
             })
                 .then((result) => {

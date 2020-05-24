@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import got = require('got');
-import { BeforeRequestHook, AfterResponseHook, GotBodyOptions, GotJSONOptions, GotFormOptions, RetryOptions } from 'got';
+import { AfterResponseHook, GotBodyOptions, GotJSONOptions, GotFormOptions, RetryOptions } from 'got';
 import { Readable } from 'stream';
 import { APIzClient, HTTPMethodLowerCase } from 'apiz-ng';
 declare enum MIME {
@@ -12,11 +12,12 @@ export declare type APIzClientMeta = any;
 export declare type APIzRawRequestOptions = GotJSONOptions | GotBodyOptions<string> | GotBodyOptions<null> | GotFormOptions<string> | GotFormOptions<null>;
 export declare type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzClientType, APIzClientMeta, HTTPMethodLowerCase>;
 export interface APIzClientConstructorOptions {
-    beforeRequest?: Array<BeforeRequestHook<GotBodyOptions<string | null>>>;
+    beforeRequest?: Array<BeforeReqHook<GotBodyOptions<string | null>>>;
     afterResponse?: Array<AfterResponseHook<GotBodyOptions<string | null>, string | Buffer | Readable>>;
     error?: (err?: Error, options?: GotJSONOptions, request?: (opts: GotJSONOptions) => ReturnType<typeof got>) => any;
     retry?: number | RetryOptions;
 }
+declare type BeforeReqHook<Options> = (options: Options, reqID: number) => any;
 /**
  * { beforeSend, afterResponse, retry }
  */
