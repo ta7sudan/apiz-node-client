@@ -22,7 +22,7 @@ export type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzClientTyp
 export interface APIzClientConstructorOptions {
 	beforeRequest?: Array<BeforeRequestHook<GotBodyOptions<string | null>>>;
 	afterResponse?: Array<AfterResponseHook<GotBodyOptions<string | null>, string | Buffer | Readable>>;
-	error?: (err: Error) => any,
+	error?: (err?: Error, options?: GotJSONOptions, request?: (opts: GotJSONOptions) => ReturnType<typeof got>) => any,
 	retry?: number | RetryOptions;
 }
 
@@ -96,7 +96,8 @@ function createRequest({
 			let $err: any = null;
 			p.catch((err: Error): any => {
 				$err = err;
-				return error(err);
+				const req = (opts: GotJSONOptions) => got(url, opts);
+				return error(err, $options as GotJSONOptions, req);
 			})
 				.then((result: any): any => {
 					if (result === false || result === undefined) {

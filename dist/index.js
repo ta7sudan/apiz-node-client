@@ -56,7 +56,8 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
             let $err = null;
             p.catch((err) => {
                 $err = err;
-                return error(err);
+                const req = (opts) => got(url, opts);
+                return error(err, $options, req);
             })
                 .then((result) => {
                 if (result === false || result === undefined) {

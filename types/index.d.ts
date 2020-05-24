@@ -1,4 +1,5 @@
 /// <reference types="node" />
+import got = require('got');
 import { BeforeRequestHook, AfterResponseHook, GotBodyOptions, GotJSONOptions, GotFormOptions, RetryOptions } from 'got';
 import { Readable } from 'stream';
 import { APIzClient, HTTPMethodLowerCase } from 'apiz-ng';
@@ -13,7 +14,7 @@ export declare type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzC
 export interface APIzClientConstructorOptions {
     beforeRequest?: Array<BeforeRequestHook<GotBodyOptions<string | null>>>;
     afterResponse?: Array<AfterResponseHook<GotBodyOptions<string | null>, string | Buffer | Readable>>;
-    error?: (err: Error) => any;
+    error?: (err?: Error, options?: GotJSONOptions, request?: (opts: GotJSONOptions) => ReturnType<typeof got>) => any;
     retry?: number | RetryOptions;
 }
 /**
