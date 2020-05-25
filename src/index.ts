@@ -28,7 +28,7 @@ export type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzClientTyp
 export interface APIzClientConstructorOptions {
 	beforeRequest?: Array<BeforeReqHook<GotBodyOptions<string | null>>>;
 	afterResponse?: Array<AfterResponseHook<GotBodyOptions<string | null>, string | Buffer | Readable>>;
-	error?: (err?: Error, options?: GotJSONOptions, request?: (opts: GotJSONOptions) => ReturnType<typeof got>) => any,
+	error?: (err?: Error, options?: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>, request?: (o: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>) => Promise<any>) => any;
 	retry?: number | RetryOptions;
 }
 
@@ -39,6 +39,10 @@ interface APIzClientConstructorOptionsWithMethod extends APIzClientConstructorOp
 }
 
 type Callable = (...args: Array<any>) => any;
+
+interface RequestOptions extends  ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta> {
+	id?: number;
+}
 
 const isFn = (f: any): f is Callable => typeof f === 'function';
 
@@ -52,16 +56,18 @@ function createRequest({
 		retry = 0
 	}: APIzClientConstructorOptionsWithMethod
 ): APIzClientRequest<APIzRawRequestOptions, APIzClientType, APIzClientMeta> {
-	return function request({
-		url,
-		options,
-		body,
-		headers,
-		type,
-		handleError = true
-	}: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>): Promise<any> {
+	const request = async function (reqOptions: RequestOptions): Promise<any> {
+		const {
+			url,
+			options,
+			body,
+			headers,
+			type,
+			handleError = true
+		} = reqOptions;
 		const hooks = {} as (Hooks<GotBodyOptions<string | null>, string | Buffer | Readable> | Hooks<GotJSONOptions, object> | Hooks<GotFormOptions<string | null>, Record<string, any>>);
-		const reqID = getUniqueID();
+		const reqID = reqOptions.id || getUniqueID();
+		reqOptions.id = reqID;
 		let $options: APIzRawRequestOptions | undefined;
 		if (options) {
 			$options = {
@@ -102,23 +108,23 @@ function createRequest({
 		const p = got(url, $options as GotJSONOptions);
 		if (isFn(error) && handleError) {
 			// 穿透
-			let $err: any = null;
-			p.catch((err: Error): any => {
-				$err = err;
-				const req = (opts: GotJSONOptions) => got(url, opts);
-				req.id = reqID;
-				return error(err, $options as GotJSONOptions, req);
-			})
-				.then((result: any): any => {
-					if (result === false || result === undefined) {
-						return Promise.reject($err);
-					} else {
-						return result;
-					}
-				});
+			try {
+				const result = await p;
+				return result;
+			} catch ($err) {
+				// const req: any = (opts: GotJSONOptions) => got(url, opts);
+				(request as any).id = reqID;
+				const rst = await error($err, reqOptions, request);
+				if (rst === false || rst === undefined) {
+					throw $err;
+				} else {
+					return rst;
+				}
+			}
 		}
-		return p;
+		return await p;
 	};
+	return request;
 }
 
 

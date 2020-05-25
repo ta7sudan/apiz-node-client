@@ -14,9 +14,11 @@ function getUniqueID() {
 }
 const isFn = (f) => typeof f === 'function';
 function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 }) {
-    return function request({ url, options, body, headers, type, handleError = true }) {
+    const request = async function (reqOptions) {
+        const { url, options, body, headers, type, handleError = true } = reqOptions;
         const hooks = {};
-        const reqID = getUniqueID();
+        const reqID = reqOptions.id || getUniqueID();
+        reqOptions.id = reqID;
         let $options;
         if (options) {
             $options = {
@@ -58,24 +60,25 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
         const p = got(url, $options);
         if (isFn(error) && handleError) {
             // 穿透
-            let $err = null;
-            p.catch((err) => {
-                $err = err;
-                const req = (opts) => got(url, opts);
-                req.id = reqID;
-                return error(err, $options, req);
-            })
-                .then((result) => {
-                if (result === false || result === undefined) {
-                    return Promise.reject($err);
+            try {
+                const result = await p;
+                return result;
+            }
+            catch ($err) {
+                // const req: any = (opts: GotJSONOptions) => got(url, opts);
+                request.id = reqID;
+                const rst = await error($err, reqOptions, request);
+                if (rst === false || rst === undefined) {
+                    throw $err;
                 }
                 else {
-                    return result;
+                    return rst;
                 }
-            });
+            }
         }
-        return p;
+        return await p;
     };
+    return request;
 }
 /**
  * { beforeSend, afterResponse, retry }
