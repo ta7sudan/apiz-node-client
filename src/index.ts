@@ -1,11 +1,12 @@
 /* global DEBUG */
-import got = require('got');
 // tslint:disable-next-line
-import { AfterResponseHook, GotBodyOptions, GotJSONOptions, GotFormOptions, RetryOptions, Hooks } from 'got';
+import got, { OptionsOfBufferResponseBody, OptionsOfJSONResponseBody, OptionsOfTextResponseBody, OptionsOfUnknownResponseBody, BeforeRequestHook, AfterResponseHook, RequiredRetryOptions, Hooks } from 'got';
 import { Readable } from 'stream';
 // tslint:disable-next-line
 import { APIzClient, HTTPMethodLowerCase, ClientRequestOptions, APIzClientRequest, HTTPMethodUpperCase } from 'apiz-ng';
+import { NormalizedOptions } from 'got/dist/source/core';
 
+// tslint:disable-next-line
 enum MIME {
 	json = 'application/json',
 	form = 'application/x-www-form-urlencoded'
@@ -21,15 +22,15 @@ export type APIzClientType = keyof typeof MIME | string;
 
 export type APIzClientMeta = any;
 
-export type APIzRawRequestOptions = GotJSONOptions | GotBodyOptions<string> | GotBodyOptions<null> | GotFormOptions<string> | GotFormOptions<null>;
+export type APIzRawRequestOptions = OptionsOfBufferResponseBody | OptionsOfJSONResponseBody | OptionsOfTextResponseBody | OptionsOfUnknownResponseBody;
 
 export type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzClientType, APIzClientMeta, HTTPMethodLowerCase>;
 
 export interface APIzClientConstructorOptions {
-	beforeRequest?: Array<BeforeReqHook<GotBodyOptions<string | null>>>;
-	afterResponse?: Array<AfterResponseHook<GotBodyOptions<string | null>, string | Buffer | Readable>>;
+	beforeRequest?: Array<BeforeReqHook<NormalizedOptions>>;
+	afterResponse?: Array<AfterResponseHook>;
 	error?: (err?: Error, options?: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>, request?: (o: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>) => Promise<any>) => any;
-	retry?: number | RetryOptions;
+	retry?: number | RequiredRetryOptions;
 }
 
 type BeforeReqHook<Options> = (options: Options, reqID: number) => any;
@@ -65,7 +66,7 @@ function createRequest({
 			type,
 			handleError = true
 		} = reqOptions;
-		const hooks = {} as (Hooks<GotBodyOptions<string | null>, string | Buffer | Readable> | Hooks<GotJSONOptions, object> | Hooks<GotFormOptions<string | null>, Record<string, any>>);
+		const hooks = {} as (Required<Hooks>);
 		const reqID = reqOptions.id || getUniqueID();
 		reqOptions.id = reqID;
 		let $options: APIzRawRequestOptions | undefined;
@@ -83,13 +84,13 @@ function createRequest({
 			};
 
 			if (Array.isArray(beforeRequest)) {
-				hooks.beforeRequest = beforeRequest.map(hook => (hookOptions: GotBodyOptions<string | null>): any => hook(hookOptions, reqID));
+				hooks.beforeRequest = beforeRequest.map((hook: BeforeReqHook<NormalizedOptions>): BeforeRequestHook => hookOptions => hook(hookOptions, reqID));
 			}
 			if (Array.isArray(afterResponse)) {
 				hooks.afterResponse = afterResponse;
 			}
 
-			($options as any).hooks = hooks;
+			$options.hooks = hooks;
 
 			if (type && type !== 'json' && type !== 'form') {
 				$options.headers ? $options.headers['Content-Type'] = type : $options.headers = {
@@ -100,12 +101,13 @@ function createRequest({
 					'Content-Type': MIME[type]
 				};
 			} else if (type === 'json') {
-				($options as GotJSONOptions).json = true;
+				$options.json = true as any;
 			} else if (type === 'form') {
-				($options as unknown as GotFormOptions<string | null>).form = true;
+				$options.form = true as any;
 			}
+			$options.responseType = 'json';
 		}
-		const p = got(url, $options as GotJSONOptions);
+		const p = got(url, $options);
 		if (isFn(error) && handleError) {
 			// 穿透
 			try {

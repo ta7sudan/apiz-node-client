@@ -65,11 +65,10 @@
     "prettier": "^1.16.4",
     "tslint": "^5.14.0",
     "tslint-config-prettier": "^1.18.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.9.5"
   },
   "dependencies": {
-    "@types/got": "^9.6.7",
-    "got": "^9.6.0"
+    "got": "^11.3.0"
   },
   "config": {
     "commitizen": {

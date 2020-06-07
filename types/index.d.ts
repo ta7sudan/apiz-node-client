@@ -1,20 +1,19 @@
-/// <reference types="node" />
-import { AfterResponseHook, GotBodyOptions, GotJSONOptions, GotFormOptions, RetryOptions } from 'got';
-import { Readable } from 'stream';
+import { OptionsOfBufferResponseBody, OptionsOfJSONResponseBody, OptionsOfTextResponseBody, OptionsOfUnknownResponseBody, AfterResponseHook, RequiredRetryOptions } from 'got';
 import { APIzClient, HTTPMethodLowerCase, ClientRequestOptions } from 'apiz-ng';
+import { NormalizedOptions } from 'got/dist/source/core';
 declare enum MIME {
     json = "application/json",
     form = "application/x-www-form-urlencoded"
 }
 export declare type APIzClientType = keyof typeof MIME | string;
 export declare type APIzClientMeta = any;
-export declare type APIzRawRequestOptions = GotJSONOptions | GotBodyOptions<string> | GotBodyOptions<null> | GotFormOptions<string> | GotFormOptions<null>;
+export declare type APIzRawRequestOptions = OptionsOfBufferResponseBody | OptionsOfJSONResponseBody | OptionsOfTextResponseBody | OptionsOfUnknownResponseBody;
 export declare type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzClientType, APIzClientMeta, HTTPMethodLowerCase>;
 export interface APIzClientConstructorOptions {
-    beforeRequest?: Array<BeforeReqHook<GotBodyOptions<string | null>>>;
-    afterResponse?: Array<AfterResponseHook<GotBodyOptions<string | null>, string | Buffer | Readable>>;
+    beforeRequest?: Array<BeforeReqHook<NormalizedOptions>>;
+    afterResponse?: Array<AfterResponseHook>;
     error?: (err?: Error, options?: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>, request?: (o: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>) => Promise<any>) => any;
-    retry?: number | RetryOptions;
+    retry?: number | RequiredRetryOptions;
 }
 declare type BeforeReqHook<Options> = (options: Options, reqID: number) => any;
 /**

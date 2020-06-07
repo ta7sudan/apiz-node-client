@@ -1,8 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 /* global DEBUG */
-const got = require("got");
+// tslint:disable-next-line
+const got_1 = tslib_1.__importDefault(require("got"));
 const stream_1 = require("stream");
+// tslint:disable-next-line
 var MIME;
 (function (MIME) {
     MIME["json"] = "application/json";
@@ -34,7 +37,7 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
                 retry
             };
             if (Array.isArray(beforeRequest)) {
-                hooks.beforeRequest = beforeRequest.map(hook => (hookOptions) => hook(hookOptions, reqID));
+                hooks.beforeRequest = beforeRequest.map((hook) => hookOptions => hook(hookOptions, reqID));
             }
             if (Array.isArray(afterResponse)) {
                 hooks.afterResponse = afterResponse;
@@ -56,8 +59,9 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
             else if (type === 'form') {
                 $options.form = true;
             }
+            $options.responseType = 'json';
         }
-        const p = got(url, $options);
+        const p = got_1.default(url, $options);
         if (isFn(error) && handleError) {
             // 穿透
             try {
