@@ -18,18 +18,20 @@ function getUniqueID(): number {
 	return ++uniqueID;
 }
 
-export type APIzClientType = keyof typeof MIME | string;
+export type APIzClientContentType = keyof typeof MIME | string;
+
+export type APIzClientResponseType = 'json';
 
 export type APIzClientMeta = any;
 
 export type APIzRawRequestOptions = OptionsOfBufferResponseBody | OptionsOfJSONResponseBody | OptionsOfTextResponseBody | OptionsOfUnknownResponseBody;
 
-export type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzClientType, APIzClientMeta, HTTPMethodLowerCase>;
+export type APIzClientInstance = APIzClient<APIzRawRequestOptions, APIzClientContentType, APIzClientResponseType, APIzClientMeta, HTTPMethodLowerCase>;
 
 export interface APIzClientConstructorOptions {
 	beforeRequest?: Array<BeforeReqHook<NormalizedOptions>>;
 	afterResponse?: Array<AfterResponseHook>;
-	error?: (err?: Error, options?: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>, request?: (o: ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta>) => Promise<any>) => any;
+	error?: (err?: Error, options?: ClientRequestOptions<APIzRawRequestOptions, APIzClientContentType, APIzClientResponseType, APIzClientMeta>, request?: (o: ClientRequestOptions<APIzRawRequestOptions, APIzClientContentType, APIzClientResponseType, APIzClientMeta>) => Promise<any>) => any;
 	retry?: number | RequiredRetryOptions;
 }
 
@@ -41,7 +43,7 @@ interface APIzClientConstructorOptionsWithMethod extends APIzClientConstructorOp
 
 type Callable = (...args: Array<any>) => any;
 
-interface RequestOptions extends  ClientRequestOptions<APIzRawRequestOptions, APIzClientType, APIzClientMeta> {
+interface RequestOptions extends  ClientRequestOptions<APIzRawRequestOptions, APIzClientContentType, APIzClientResponseType, APIzClientMeta> {
 	id?: number;
 }
 
@@ -56,14 +58,15 @@ function createRequest({
 		error,
 		retry = 0
 	}: APIzClientConstructorOptionsWithMethod
-): APIzClientRequest<APIzRawRequestOptions, APIzClientType, APIzClientMeta> {
+): APIzClientRequest<APIzRawRequestOptions, APIzClientContentType, APIzClientResponseType, APIzClientMeta> {
 	const request = async function (reqOptions: RequestOptions): Promise<any> {
 		const {
 			url,
 			options,
 			body,
 			headers,
-			type,
+			contentType,
+			responseType,
 			handleError = true
 		} = reqOptions;
 		const hooks = {} as (Required<Hooks>);
@@ -78,7 +81,6 @@ function createRequest({
 		} else {
 			$options = {
 				method,
-				body,
 				headers,
 				retry
 			};
@@ -92,20 +94,38 @@ function createRequest({
 
 			$options.hooks = hooks;
 
-			if (type && type !== 'json' && type !== 'form') {
-				$options.headers ? $options.headers['Content-Type'] = type : $options.headers = {
-					'Content-Type': type
+			if (contentType && contentType !== 'json' && contentType !== 'form') {
+				$options.headers ? $options.headers['Content-Type'] = contentType : $options.headers = {
+					'Content-Type': contentType
 				};
-			} else if ((body instanceof Buffer || body instanceof Readable) && (type === 'form' || type === 'json')) {
-				$options.headers ? $options.headers['Content-Type'] = MIME[type] : $options.headers = {
-					'Content-Type': MIME[type]
+				$options.body = body;
+			} else if ((body instanceof Buffer || body instanceof Readable) && (contentType === 'form' || contentType === 'json')) {
+				$options.headers ? $options.headers['Content-Type'] = MIME[contentType] : $options.headers = {
+					'Content-Type': MIME[contentType]
 				};
-			} else if (type === 'json') {
-				$options.json = true as any;
-			} else if (type === 'form') {
-				$options.form = true as any;
+				$options.body = body;
+			} else if (contentType === 'json') {
+				if (typeof body === 'string') {
+					$options.headers ? $options.headers['Content-Type'] = MIME[contentType] : $options.headers = {
+						'Content-Type': MIME[contentType]
+					};
+					$options.body = body;
+				} else {
+					$options.json = body
+				}
+			} else if (contentType === 'form') {
+				if (typeof body === 'string') {
+					$options.headers ? $options.headers['Content-Type'] = MIME[contentType] : $options.headers = {
+						'Content-Type': MIME[contentType]
+					};
+					$options.body = body;
+				} else {
+					$options.form = body
+				}
+			} else {
+				$options.body = body;
 			}
-			$options.responseType = 'json';
+			$options.responseType = responseType;
 		}
 		const p = got(url, $options);
 		if (isFn(error) && handleError) {

@@ -54,7 +54,7 @@
   },
   "homepage": "https://github.com/ta7sudan/apiz-node-client#readme",
   "devDependencies": {
-    "apiz-ng": "^4.0.0",
+    "apiz-ng": "^5.0.1",
     "conventional-changelog-cli": "^2.0.12",
     "cz-conventional-changelog": "^2.1.0",
     "eslint": "^5.15.3",
@@ -68,7 +68,7 @@
     "typescript": "^3.9.5"
   },
   "dependencies": {
-    "got": "^11.3.0"
+    "got": "^11.5.1"
   },
   "config": {
     "commitizen": {

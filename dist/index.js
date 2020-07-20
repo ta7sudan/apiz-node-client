@@ -18,7 +18,7 @@ function getUniqueID() {
 const isFn = (f) => typeof f === 'function';
 function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 }) {
     const request = async function (reqOptions) {
-        const { url, options, body, headers, type, handleError = true } = reqOptions;
+        const { url, options, body, headers, contentType, responseType, handleError = true } = reqOptions;
         const hooks = {};
         const reqID = reqOptions.id || getUniqueID();
         reqOptions.id = reqID;
@@ -32,7 +32,6 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
         else {
             $options = {
                 method,
-                body,
                 headers,
                 retry
             };
@@ -43,23 +42,44 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
                 hooks.afterResponse = afterResponse;
             }
             $options.hooks = hooks;
-            if (type && type !== 'json' && type !== 'form') {
-                $options.headers ? $options.headers['Content-Type'] = type : $options.headers = {
-                    'Content-Type': type
+            if (contentType && contentType !== 'json' && contentType !== 'form') {
+                $options.headers ? $options.headers['Content-Type'] = contentType : $options.headers = {
+                    'Content-Type': contentType
                 };
+                $options.body = body;
             }
-            else if ((body instanceof Buffer || body instanceof stream_1.Readable) && (type === 'form' || type === 'json')) {
-                $options.headers ? $options.headers['Content-Type'] = MIME[type] : $options.headers = {
-                    'Content-Type': MIME[type]
+            else if ((body instanceof Buffer || body instanceof stream_1.Readable) && (contentType === 'form' || contentType === 'json')) {
+                $options.headers ? $options.headers['Content-Type'] = MIME[contentType] : $options.headers = {
+                    'Content-Type': MIME[contentType]
                 };
+                $options.body = body;
             }
-            else if (type === 'json') {
-                $options.json = true;
+            else if (contentType === 'json') {
+                if (typeof body === 'string') {
+                    $options.headers ? $options.headers['Content-Type'] = MIME[contentType] : $options.headers = {
+                        'Content-Type': MIME[contentType]
+                    };
+                    $options.body = body;
+                }
+                else {
+                    $options.json = body;
+                }
             }
-            else if (type === 'form') {
-                $options.form = true;
+            else if (contentType === 'form') {
+                if (typeof body === 'string') {
+                    $options.headers ? $options.headers['Content-Type'] = MIME[contentType] : $options.headers = {
+                        'Content-Type': MIME[contentType]
+                    };
+                    $options.body = body;
+                }
+                else {
+                    $options.form = body;
+                }
             }
-            $options.responseType = 'json';
+            else {
+                $options.body = body;
+            }
+            $options.responseType = responseType;
         }
         const p = got_1.default(url, $options);
         if (isFn(error) && handleError) {
