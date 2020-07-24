@@ -85,14 +85,14 @@ function createRequest({
 				retry
 			};
 
-			if (Array.isArray(beforeRequest)) {
-				hooks.beforeRequest = beforeRequest.map((hook: BeforeReqHook<NormalizedOptions>): BeforeRequestHook => hookOptions => hook(hookOptions, reqID));
-			}
-			if (Array.isArray(afterResponse)) {
-				hooks.afterResponse = afterResponse;
+			if (typeof body === 'object' && body != null) {
+				for (const [k, v] of Object.entries<any>(body)) {
+					if (v == null) {
+						delete body[k];
+					}
+				}
 			}
 
-			$options.hooks = hooks;
 
 			if (contentType && contentType !== 'json' && contentType !== 'form') {
 				$options.headers ? $options.headers['Content-Type'] = contentType : $options.headers = {
@@ -126,7 +126,18 @@ function createRequest({
 				$options.body = body;
 			}
 			$options.responseType = responseType;
+
+			if (Array.isArray(beforeRequest)) {
+				hooks.beforeRequest = beforeRequest.map((hook: BeforeReqHook<NormalizedOptions>): BeforeRequestHook => hookOptions => hook(hookOptions, reqID));
+			}
+			if (Array.isArray(afterResponse)) {
+				hooks.afterResponse = afterResponse;
+			}
+
+			$options.hooks = hooks;
 		}
+
+
 		const p = got(url, $options);
 		if (isFn(error) && handleError) {
 			// 穿透

@@ -35,13 +35,13 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
                 headers,
                 retry
             };
-            if (Array.isArray(beforeRequest)) {
-                hooks.beforeRequest = beforeRequest.map((hook) => hookOptions => hook(hookOptions, reqID));
+            if (typeof body === 'object' && body != null) {
+                for (const [k, v] of Object.entries(body)) {
+                    if (v == null) {
+                        delete body[k];
+                    }
+                }
             }
-            if (Array.isArray(afterResponse)) {
-                hooks.afterResponse = afterResponse;
-            }
-            $options.hooks = hooks;
             if (contentType && contentType !== 'json' && contentType !== 'form') {
                 $options.headers ? $options.headers['Content-Type'] = contentType : $options.headers = {
                     'Content-Type': contentType
@@ -80,6 +80,13 @@ function createRequest({ method, beforeRequest, afterResponse, error, retry = 0 
                 $options.body = body;
             }
             $options.responseType = responseType;
+            if (Array.isArray(beforeRequest)) {
+                hooks.beforeRequest = beforeRequest.map((hook) => hookOptions => hook(hookOptions, reqID));
+            }
+            if (Array.isArray(afterResponse)) {
+                hooks.afterResponse = afterResponse;
+            }
+            $options.hooks = hooks;
         }
         const p = got_1.default(url, $options);
         if (isFn(error) && handleError) {
