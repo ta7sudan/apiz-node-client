@@ -136,6 +136,14 @@ function createRequest({
 
 			$options.hooks = hooks;
 		}
+		if (
+			($options.body !== undefined && $options.json !== undefined) ||
+			($options.body !== undefined && $options.form !== undefined) ||
+			($options.form !== undefined && $options.json !== undefined)
+			) {
+				console.log(`body, json, form are mutually exclusive, method: ${method}, url: ${url} body: ${body}, json: ${JSON.stringify($options.json)}, form: ${$options.form}`);
+				throw new Error(`body, json, form are mutually exclusive, method: ${method}, url: ${url} body: ${body}, json: ${JSON.stringify($options.json)}, form: ${$options.form}`);
+		}
 
 
 		const p = got(url, $options);
